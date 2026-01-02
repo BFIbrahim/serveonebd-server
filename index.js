@@ -30,9 +30,35 @@ async function run() {
         const db = client.db('database')
         const requestCollection = db.collection('requests')
 
-        app.get('/requests', async(req, res) => {
+        app.get('/requests', async (req, res) => {
             const requests = await requestCollection.find().toArray()
             res.send(requests)
+        })
+
+        app.get('/pending-requests', async (req, res) => {
+            try {
+                const requests = await requestCollection.find({ status: "pending" }).toArray()
+
+                res.send(requests)
+            } catch (error) {
+                console.log({ message: error.message })
+            }
+        })
+
+        app.get('/requests/email', async (req, res) => {
+            try {
+                const email = req.query.email
+
+                if (!email) {
+                    res.send('Email is required')
+                }
+
+                const result = await requestCollection.find({ email: email }).toArray()
+
+                res.send(result)
+            } catch (error) {
+                console.log({ message: error.message })
+            }
         })
 
         app.post('/requests', async (req, res) => {

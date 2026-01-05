@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 dotenv.config()
 
@@ -53,7 +53,7 @@ async function run() {
                     res.send('Email is required')
                 }
 
-                const result = await requestCollection.find({ email: email }).toArray()
+                const result = await requestCollection.find({ email: email }).sort({ createdAt: - 1 }).toArray()
 
                 res.send(result)
             } catch (error) {
@@ -72,6 +72,59 @@ async function run() {
             } catch (error) {
                 console.log('Error inserting percel', error)
                 res.status(500).send('Failed to create new request')
+            }
+        })
+
+        const { ObjectId } = require("mongodb");
+
+        app.patch('/requests/:id/status', async (req, res) => {
+            try {
+                const { id } = req.params;
+                const { status } = req.body;
+
+                // Validate status
+                if (!status || !["approved", "rejected"].includes(status)) {
+                    return res.status(400).send({ message: "Status must be 'approved' or 'rejected'" });
+                }
+
+                const result = await requestCollection.updateOne(
+                    { _id: new ObjectId(id) },
+                    { $set: { status } }
+                );
+
+                if (result.matchedCount === 0) {
+                    return res.status(404).send({ message: "Request not found" });
+                }
+
+                res.status(200).send({
+                    success: true,
+                    message: `Request status updated to ${status}`,
+                });
+            } catch (error) {
+                console.error(error);
+                res.status(500).send({ message: error.message });
+            }
+        });
+
+        app.delete('/requests/:id', async (req, res) => {
+            try {
+                const { id } = req.params
+
+                const result = await requestCollection.deleteOne({
+                    _id: new ObjectId(id)
+                })
+
+                if (result.deletedCount === 0) {
+                    return res.status(404).send({ message: "Request not found" });
+                }
+
+                res.status(200).send({
+                    success: true,
+                    message: "Request deleted successfully",
+                });
+
+            } catch (error) {
+                res.status(500).send({ message: error.message });
             }
         })
 

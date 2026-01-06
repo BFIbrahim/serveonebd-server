@@ -28,7 +28,21 @@ async function run() {
         await client.connect();
 
         const db = client.db('database')
+        const usersCollection = db.collection('users')
         const requestCollection = db.collection('requests')
+
+        app.post('/users', async(req, res) => {
+            const {email} = req.body.email
+            const existsUser = await usersCollection.findOne({email})
+            if(existsUser){
+                return res.status(200).send({message: 'User already exists'})
+            }
+
+            const user = req.body
+            const result = await usersCollection.insertOne(user)
+
+            res.status(200).send(result)
+        })
 
         app.get('/requests', async (req, res) => {
             const requests = await requestCollection.find().toArray()
@@ -82,9 +96,11 @@ async function run() {
                 const { id } = req.params;
                 const { status } = req.body;
 
-                // Validate status
-                if (!status || !["approved", "rejected"].includes(status)) {
-                    return res.status(400).send({ message: "Status must be 'approved' or 'rejected'" });
+                const allowedStatuses = ["approved", "rejected", "matched"];
+                if (!status || !allowedStatuses.includes(status)) {
+                    return res.status(400).send({
+                        message: `Status must be one of: ${allowedStatuses.join(", ")}`
+                    });
                 }
 
                 const result = await requestCollection.updateOne(
@@ -105,6 +121,22 @@ async function run() {
                 res.status(500).send({ message: error.message });
             }
         });
+
+
+        app.get('/requests/approved', async (req, res) => {
+            try {
+                const approvedRequests = await requestCollection
+                    .find({ status: "approved" })
+                    .sort({ createdAt: -1 })
+                    .toArray();
+
+                res.status(200).send(approvedRequests);
+            } catch (error) {
+                console.error(error);
+                res.status(500).send({ message: error.message });
+            }
+        });
+
 
         app.delete('/requests/:id', async (req, res) => {
             try {

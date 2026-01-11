@@ -358,16 +358,40 @@ async function run() {
             }
         });
 
-        app.post('/campaigns', async(req, res) => {
+        app.post('/campaigns', async (req, res) => {
             try {
                 const campiagn = req.body
 
-            const result = await campaignsCollection.insertOne(campiagn)
-            res.status(200).send(result)
+                const result = await campaignsCollection.insertOne(campiagn)
+                res.status(200).send(result)
             } catch (error) {
                 res.status(500).send('Failed to add new campaign')
             }
         })
+
+        app.get("/campaigns", async (req, res) => {
+            try {
+                const { status } = req.query;
+
+                const query = {};
+                if (status) {
+                    query.status = status;
+                }
+
+                const campaigns = await campaignsCollection
+                    .find(query)
+                    .sort({ createdAt: -1 })
+                    .toArray();
+
+                res.send(campaigns);
+            } catch (error) {
+                res.status(500).send({
+                    message: "Failed to fetch campaigns",
+                    error: error.message,
+                });
+            }
+        });
+
 
 
 

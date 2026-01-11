@@ -392,6 +392,47 @@ async function run() {
             }
         });
 
+        app.patch("/campaigns/:id/status", async (req, res) => {
+            try {
+                const { id } = req.params;
+                const { status } = req.body;
+
+                const allowedStatus = ["approved", "rejected"];
+                if (!allowedStatus.includes(status)) {
+                    return res.status(400).send({
+                        message: "Invalid status value",
+                    });
+                }
+
+                const result = await campaignsCollection.updateOne(
+                    { _id: new ObjectId(id) },
+                    {
+                        $set: {
+                            status,
+                            updatedAt: new Date(),
+                        },
+                    }
+                );
+
+                if (result.matchedCount === 0) {
+                    return res.status(404).send({
+                        message: "Campaign not found",
+                    });
+                }
+
+                res.send({
+                    success: true,
+                    message: `Campaign ${status} successfully`,
+                });
+            } catch (error) {
+                res.status(500).send({
+                    message: "Failed to update campaign status",
+                    error: error.message,
+                });
+            }
+        });
+
+
 
 
 

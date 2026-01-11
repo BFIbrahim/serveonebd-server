@@ -371,12 +371,10 @@ async function run() {
 
         app.get("/campaigns", async (req, res) => {
             try {
-                const { status } = req.query;
-
+                const { status, createdBy } = req.query;
                 const query = {};
-                if (status) {
-                    query.status = status;
-                }
+                if (status) query.status = status;
+                if (createdBy) query.createdBy = createdBy;
 
                 const campaigns = await campaignsCollection
                     .find(query)
@@ -385,12 +383,10 @@ async function run() {
 
                 res.send(campaigns);
             } catch (error) {
-                res.status(500).send({
-                    message: "Failed to fetch campaigns",
-                    error: error.message,
-                });
+                res.status(500).send({ message: "Failed to fetch campaigns" });
             }
         });
+
 
         app.patch("/campaigns/:id/status", async (req, res) => {
             try {

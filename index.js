@@ -39,6 +39,7 @@ async function run() {
         const usersCollection = db.collection('users')
         const requestCollection = db.collection('requests')
         const volunteersCollection = db.collection('volunteers')
+        const campaignsCollection = db.collection('campaigns')
 
         const veriFyLogin = async (req, res, next) => {
             const authHeader = req.headers.authorization;
@@ -205,8 +206,6 @@ async function run() {
             }
         });
 
-
-
         app.get('/requests/approved', async (req, res) => {
             try {
                 const approvedRequests = await requestCollection
@@ -358,6 +357,17 @@ async function run() {
                 res.status(500).send({ message: error.message });
             }
         });
+
+        app.post('/campaigns', async(req, res) => {
+            try {
+                const campiagn = req.body
+
+            const result = await campaignsCollection.insertOne(campiagn)
+            res.status(200).send(result)
+            } catch (error) {
+                res.status(500).send('Failed to add new campaign')
+            }
+        })
 
 
 

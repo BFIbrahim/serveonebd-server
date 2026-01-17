@@ -393,10 +393,11 @@ async function run() {
                 const { id } = req.params;
                 const { status } = req.body;
 
-                const allowedStatus = ["approved", "rejected"];
-                if (!allowedStatus.includes(status)) {
+                const allowedStatus = ["approved", "rejected", "completed", "urgent"];
+
+                if (!status || !allowedStatus.includes(status)) {
                     return res.status(400).send({
-                        message: "Invalid status value",
+                        message: `Invalid status. Allowed: ${allowedStatus.join(", ")}`,
                     });
                 }
 
@@ -428,7 +429,31 @@ async function run() {
             }
         });
 
+        app.delete("/campaigns/:id", async (req, res) => {
+            try {
+                const { id } = req.params;
 
+                const result = await campaignsCollection.deleteOne({ _id: new ObjectId(id) });
+
+                if (result.deletedCount === 0) {
+                    return res.status(404).send({
+                        success: false,
+                        message: "Campaign not found",
+                    });
+                }
+
+                res.send({
+                    success: true,
+                    message: "Campaign deleted successfully",
+                });
+            } catch (error) {
+                res.status(500).send({
+                    success: false,
+                    message: "Failed to delete campaign",
+                    error: error.message,
+                });
+            }
+        });
 
 
 

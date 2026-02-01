@@ -12,7 +12,9 @@ const port = process.env.PORT || 5000
 app.use(cors())
 app.use(express.json())
 
-const serviceAccount = require("./firebase-admin-key.json");
+
+const decodedKey = Buffer.from(process.env.FIREBASE_SERVICE_KEY, 'base64').toString('utf8');
+const serviceAccount = JSON.parse(decodedKey);
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
